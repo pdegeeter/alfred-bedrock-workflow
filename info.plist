@@ -372,7 +372,7 @@
 				<key>runningsubtext</key>
 				<string>Correcting...</string>
 				<key>script</key>
-				<string>/usr/local/bin/node Command/aspell.js "$1"</string>
+				<string>source ~/.zshenv 2>/dev/null; /usr/local/bin/node Command/aspell.js "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -492,7 +492,7 @@
 				<key>runningsubtext</key>
 				<string>Asking Bedrock...</string>
 				<key>script</key>
-				<string>/usr/local/bin/node Command/bedrock.js "$1"</string>
+				<string>source ~/.zshenv 2>/dev/null; /usr/local/bin/node Command/bedrock.js "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -612,7 +612,7 @@
 				<key>runningsubtext</key>
 				<string>Translating...</string>
 				<key>script</key>
-				<string>/usr/local/bin/node Command/translate.js "$1"</string>
+				<string>source ~/.zshenv 2>/dev/null; /usr/local/bin/node Command/translate.js "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -873,12 +873,12 @@ Examples:
 				<key>placeholder</key>
 				<string>Enter your Bedrock API bearer token</string>
 				<key>required</key>
-				<true/>
+				<false/>
 				<key>trim</key>
 				<true/>
 			</dict>
 			<key>description</key>
-			<string>Your Amazon Bedrock bearer token for API authentication</string>
+			<string>Your Amazon Bedrock bearer token. If empty, uses AWS_BEARER_TOKEN_BEDROCK environment variable.</string>
 			<key>label</key>
 			<string>Bedrock API Token</string>
 			<key>type</key>

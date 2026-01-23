@@ -20,7 +20,7 @@ interface ParsedQuery {
 }
 
 function parseQuery(query: string, defaultLang: string): ParsedQuery {
-  const match = /^:([a-zA-Z]{2})\s+(.+)$/s.exec(query);
+  const match = /^:?([a-zA-Z]{2})\s+(.+)$/s.exec(query);
   if (match) {
     return { lang: match[1].toLowerCase(), text: match[2] };
   }
@@ -29,9 +29,9 @@ function parseQuery(query: string, defaultLang: string): ParsedQuery {
 
 async function main(): Promise<void> {
   const query = process.argv[2];
-  const token = process.env["token"] ?? "";
-  const model = process.env["model"] ?? DEFAULT_MODEL;
-  const defaultLang = process.env["default_lang"] ?? "en";
+  const token = process.env["token"] || process.env["AWS_BEARER_TOKEN_BEDROCK"] || "";
+  const model = process.env["model"] || DEFAULT_MODEL;
+  const defaultLang = process.env["default_lang"] || "en";
 
   if (!query) {
     const output = createErrorResponse("Please enter text to translate");
