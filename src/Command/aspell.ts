@@ -19,8 +19,8 @@ ABSOLUTE rules:
 
 async function main(): Promise<void> {
   const query = process.argv[2];
-  const token = process.env["token"] ?? "";
-  const model = process.env["model"] ?? DEFAULT_MODEL;
+  const token = process.env["token"] || process.env["AWS_BEARER_TOKEN_BEDROCK"] || "";
+  const model = process.env["model"] || DEFAULT_MODEL;
 
   if (!query) {
     const output = createErrorResponse("Please enter text to correct");

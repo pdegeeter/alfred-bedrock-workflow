@@ -38,7 +38,7 @@ void describe("translate command", () => {
       query: string,
       defaultLang: string
     ): { lang: string; text: string } => {
-      const match = /^:([a-zA-Z]{2})\s+(.+)$/s.exec(query);
+      const match = /^:?([a-zA-Z]{2})\s+(.+)$/s.exec(query);
       if (match) {
         return { lang: match[1].toLowerCase(), text: match[2] };
       }
@@ -53,6 +53,12 @@ void describe("translate command", () => {
 
     void it("extracts language from :lang prefix", () => {
       const result = parseQuery(":fr Hello world", "en");
+      assert.strictEqual(result.lang, "fr");
+      assert.strictEqual(result.text, "Hello world");
+    });
+
+    void it("extracts language from lang prefix without colon", () => {
+      const result = parseQuery("fr Hello world", "en");
       assert.strictEqual(result.lang, "fr");
       assert.strictEqual(result.text, "Hello world");
     });
