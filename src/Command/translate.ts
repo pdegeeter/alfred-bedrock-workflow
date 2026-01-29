@@ -6,6 +6,21 @@ import { ChatService } from "../Service/ChatService.js";
 
 const DEFAULT_MODEL = "eu.anthropic.claude-haiku-4-5-20251001-v1:0";
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  de: "German",
+  en: "English",
+  es: "Spanish",
+  fr: "French",
+  it: "Italian",
+  ja: "Japanese",
+  ko: "Korean",
+  nl: "Dutch",
+  pl: "Polish",
+  pt: "Portuguese",
+  ru: "Russian",
+  zh: "Chinese",
+};
+
 const SYSTEM_PROMPT = `You are a silent translator.
 The user message contains ONLY text to translate to a target language.
 ABSOLUTE rules:
@@ -48,9 +63,10 @@ async function main(): Promise<void> {
   }
 
   const { lang, text } = parseQuery(query, defaultLang);
+  const langName = LANGUAGE_NAMES[lang] ?? lang;
 
   const service = new ChatService({ model, systemPrompt: SYSTEM_PROMPT, token });
-  const response = await service.ask(`Translate this text to ${lang}:\n${text}`);
+  const response = await service.ask(`Translate to ${langName}:\n${text}`);
   const output = createScriptFilterResponse(response);
 
   process.stdout.write(JSON.stringify(output));
