@@ -68,7 +68,7 @@ export class SsoAuthService {
       this.cache.update((state) => {
         state.pendingAuthorization = pending;
       });
-      await new BrowserLauncher().open(authorization.verificationUriComplete);
+      await new BrowserLauncher().open(authorization.verificationUriComplete, this.config.browser);
     }
 
     try {

@@ -110,7 +110,7 @@ void describe("BedrockTokenProvider", () => {
 
       assert.match(token, /^bedrock-api-key-/);
       assert.strictEqual(openBrowser.mock.callCount(), 1);
-      assert.deepStrictEqual(openBrowser.mock.calls[0].arguments, ["https://verify"]);
+      assert.deepStrictEqual(openBrowser.mock.calls[0].arguments, ["https://verify", undefined]);
       assert.deepStrictEqual(idc.calls, [
         "/client/register",
         "/device_authorization",
@@ -167,6 +167,12 @@ void describe("BedrockTokenProvider", () => {
 
       assert.notStrictEqual(us, eu);
       assert.deepStrictEqual(idc.calls, ["/federation/credentials"]);
+    });
+
+    void it("opens the login in the configured browser", async () => {
+      await new BedrockTokenProvider("", { ...sso, browser: "Brave Browser" }, cacheDir).getToken("eu-west-1");
+
+      assert.deepStrictEqual(openBrowser.mock.calls[0].arguments, ["https://verify", "Brave Browser"]);
     });
 
     void it("skips account discovery when the account ID is configured", async () => {

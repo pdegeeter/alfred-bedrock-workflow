@@ -40,6 +40,7 @@ Configure the following variables in Alfred workflow settings:
 | `sso_role_name`  | No\*     | IAM Identity Center role (permission set) used to generate the key        |
 | `sso_region`     | No       | IAM Identity Center region (default: `eu-west-1`)                         |
 | `sso_account_id` | No       | AWS account of the role; auto-discovered if the role is in one account    |
+| `browser`        | No       | Application opening the SSO login, e.g. `Brave Browser` (default browser) |
 | `model`          | No       | Select from dropdown (default: Claude Haiku 4.5 EU)                       |
 | `default_lang`   | No       | Default target language for translations (e.g., en, fr, de)               |
 
