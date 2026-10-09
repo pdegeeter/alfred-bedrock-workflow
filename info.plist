@@ -974,6 +974,27 @@ Examples:
 			<key>config</key>
 			<dict>
 				<key>default</key>
+				<string></string>
+				<key>placeholder</key>
+				<string>Brave Browser</string>
+				<key>required</key>
+				<false/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>Application used to open the SSO login page. Uses the default browser when empty.</string>
+			<key>label</key>
+			<string>Login Browser</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>browser</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
 				<string>eu.anthropic.claude-haiku-4-5-20251001-v1:0</string>
 				<key>pairs</key>
 				<array>
