@@ -2,6 +2,8 @@ import {
   createErrorResponse,
   createScriptFilterResponse,
 } from "../Helper/AlfredOutput.js";
+import { detectRegion } from "../Helper/RegionDetector.js";
+import { BedrockTokenProvider } from "../Service/BedrockTokenProvider.js";
 import { ChatService } from "../Service/ChatService.js";
 
 const DEFAULT_MODEL = "eu.anthropic.claude-haiku-4-5-20251001-v1:0";
@@ -19,7 +21,6 @@ ABSOLUTE rules:
 
 async function main(): Promise<void> {
   const query = process.argv[2];
-  const token = process.env["token"] || process.env["AWS_BEARER_TOKEN_BEDROCK"] || "";
   const model = process.env["model"] || DEFAULT_MODEL;
 
   if (!query) {
@@ -28,13 +29,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (!token) {
-    const output = createErrorResponse(
-      "Error: Bedrock token not configured"
-    );
-    process.stdout.write(JSON.stringify(output));
-    return;
-  }
+  const token = await BedrockTokenProvider.fromEnvironment(process.env).getToken(detectRegion(model));
 
   const service = new ChatService({ model, systemPrompt: SYSTEM_PROMPT, token });
   const response = await service.ask(`Texte à corriger:\n${query}`);

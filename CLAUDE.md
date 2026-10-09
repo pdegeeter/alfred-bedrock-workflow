@@ -20,10 +20,12 @@ Alfred Bedrock Workflow is a TypeScript-based Alfred workflow that integrates wi
 
 ```
 src/
-├── Client/
-├── Command/
-├── Helper/
-└── Service/
+├── Client/   # Bedrock Runtime, IAM Identity Center OIDC and portal APIs
+├── Command/  # Alfred entry points
+├── Error/
+├── Helper/   # Alfred output, region detection, short-term key signing, file cache
+├── Service/  # Chat, SSO login and Bedrock token resolution
+└── Type/     # Shared interfaces (one per file)
 
 test/
 ├── Client/
@@ -41,11 +43,26 @@ test/
 
 ## Alfred Configuration Variables
 
-- `token` (required) - Bedrock API bearer token
+- `token` (optional) - Bedrock API bearer token, falls back to `AWS_BEARER_TOKEN_BEDROCK`
+- `sso_start_url`, `sso_role_name` (optional) - IAM Identity Center portal URL and role used to generate short-term keys when no static token is set
+- `sso_region` (optional) - IAM Identity Center region, default: `eu-west-1`
+- `sso_account_id` (optional) - AWS account of the role, auto-discovered when the role exists in a single account
+
+All authentication variables are listed in `variablesdontexport`. Never commit real SSO URLs, role names or account IDs: their values live in Alfred's `prefs.plist` (git-ignored).
 - `model` (optional) - Dropdown selection of available models, default: `eu.anthropic.claude-haiku-4-5-20251001-v1:0`
 - `default_lang` (optional) - Default target language for translations
 
 Region is auto-detected from model prefix (`eu.` → `eu-west-1`, `us.`/`global.` → `us-east-1`).
+
+## Bedrock Token Resolution
+
+`BedrockTokenProvider` resolves the bearer token in this order:
+
+1. `token` variable, then `AWS_BEARER_TOKEN_BEDROCK`
+2. Cached short-term key for `<account>:<role>:<region>` (short-term keys are region-bound)
+3. New short-term key: IAM Identity Center access token (cache → refresh token → browser device login) → `GetRoleCredentials` → SigV4-presigned `CallWithBearerToken` URL (`BedrockTokenGenerator`, byte-identical to `@aws/bedrock-token-generator`)
+
+A key is cached until `min(generation + 12h, role credentials expiration)`, minus a 5-minute margin. State is stored in `$alfred_workflow_cache/auth.json` (mode 0600). A pending device authorization is persisted so a script killed by Alfred resumes polling instead of opening a new browser tab.
 
 ## Alfred Workflow Triggers
 

@@ -6,7 +6,7 @@ An Alfred workflow to interact with Amazon Bedrock models directly from Alfred.
 
 - [Alfred 5+](https://www.alfredapp.com/) with Powerpack
 - [Node.js 24+](https://nodejs.org/)
-- Amazon Bedrock API key (bearer token)
+- Amazon Bedrock API key (bearer token), or an IAM Identity Center (SSO) role allowed to call Bedrock
 
 ## Installation
 
@@ -14,7 +14,7 @@ An Alfred workflow to interact with Amazon Bedrock models directly from Alfred.
 
 1. Download `alfred-bedrock-workflow.alfredworkflow` from the releases page
 2. Double-click to install in Alfred
-3. Configure your API key in the workflow settings
+3. Configure authentication in the workflow settings
 
 ### From Source
 
@@ -33,13 +33,34 @@ An Alfred workflow to interact with Amazon Bedrock models directly from Alfred.
 
 Configure the following variables in Alfred workflow settings:
 
-| Variable       | Required | Description                                                 |
-| -------------- | -------- | ----------------------------------------------------------- |
-| `token`        | Yes      | Bedrock API bearer token                                    |
-| `model`        | No       | Select from dropdown (default: Claude Haiku 4.5 EU)         |
-| `default_lang` | No       | Default target language for translations (e.g., en, fr, de) |
+| Variable         | Required | Description                                                               |
+| ---------------- | -------- | ------------------------------------------------------------------------- |
+| `token`          | No\*     | Bedrock API bearer token (falls back to `AWS_BEARER_TOKEN_BEDROCK`)       |
+| `sso_start_url`  | No\*     | IAM Identity Center access portal URL                                     |
+| `sso_role_name`  | No\*     | IAM Identity Center role (permission set) used to generate the key        |
+| `sso_region`     | No       | IAM Identity Center region (default: `eu-west-1`)                         |
+| `sso_account_id` | No       | AWS account of the role; auto-discovered if the role is in one account    |
+| `model`          | No       | Select from dropdown (default: Claude Haiku 4.5 EU)                       |
+| `default_lang`   | No       | Default target language for translations (e.g., en, fr, de)               |
+
+\* Set either `token`, or `sso_start_url` and `sso_role_name`.
 
 Region is auto-detected from the model prefix.
+
+### Authentication with IAM Identity Center
+
+When no static token is configured, the workflow generates a Bedrock [short-term API key](https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys.md) itself:
+
+1. On first use, your browser opens the IAM Identity Center login page. Approve the request; Alfred shows the spinner until you do.
+2. The workflow fetches temporary credentials for the configured role and signs a short-term key locally.
+3. The key is cached and reused until it expires. Its lifetime is the shorter of 12 hours and the role session duration configured on the permission set.
+4. When the key expires, a new one is generated silently as long as the IAM Identity Center session is valid; otherwise the browser opens again.
+
+The role needs the `bedrock:CallWithBearerToken` permission in addition to the model invocation permissions. Keys are region-bound: switching between EU and US models generates one key per region.
+
+Tokens are cached in Alfred's workflow cache folder (`auth.json`, readable only by your user). Delete this file to force a new login.
+
+SSO settings are excluded from workflow exports.
 
 ## Usage
 
