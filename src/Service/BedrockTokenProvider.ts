@@ -51,6 +51,7 @@ export class BedrockTokenProvider {
     const sso: SsoConfig | undefined = startUrl
       ? {
           accountId: env["sso_account_id"] || undefined,
+          browser: env["browser"] || undefined,
           region: env["sso_region"] || BedrockTokenProvider.DEFAULT_SSO_REGION,
           roleName,
           startUrl,

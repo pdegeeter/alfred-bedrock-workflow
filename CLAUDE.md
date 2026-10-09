@@ -47,6 +47,7 @@ test/
 - `sso_start_url`, `sso_role_name` (optional) - IAM Identity Center portal URL and role used to generate short-term keys when no static token is set
 - `sso_region` (optional) - IAM Identity Center region, default: `eu-west-1`
 - `sso_account_id` (optional) - AWS account of the role, auto-discovered when the role exists in a single account
+- `browser` (optional) - Application opening the SSO login page (`open -a`), default browser when empty
 
 All authentication variables are listed in `variablesdontexport`. Never commit real SSO URLs, role names or account IDs: their values live in Alfred's `prefs.plist` (git-ignored).
 - `model` (optional) - Dropdown selection of available models, default: `eu.anthropic.claude-haiku-4-5-20251001-v1:0`
