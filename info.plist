@@ -372,7 +372,7 @@
 				<key>runningsubtext</key>
 				<string>Correcting...</string>
 				<key>script</key>
-				<string>source ~/.zshenv 2>/dev/null; /usr/local/bin/node Command/aspell.js "$1"</string>
+				<string>source ~/.zshenv 2>/dev/null; PATH="$PATH:/opt/homebrew/bin:/usr/local/bin" node Command/aspell.js "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -492,7 +492,7 @@
 				<key>runningsubtext</key>
 				<string>Asking Bedrock...</string>
 				<key>script</key>
-				<string>source ~/.zshenv 2>/dev/null; /usr/local/bin/node Command/bedrock.js "$1"</string>
+				<string>source ~/.zshenv 2>/dev/null; PATH="$PATH:/opt/homebrew/bin:/usr/local/bin" node Command/bedrock.js "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -612,7 +612,7 @@
 				<key>runningsubtext</key>
 				<string>Translating...</string>
 				<key>script</key>
-				<string>source ~/.zshenv 2>/dev/null; /usr/local/bin/node Command/translate.js "$1"</string>
+				<string>source ~/.zshenv 2>/dev/null; PATH="$PATH:/opt/homebrew/bin:/usr/local/bin" node Command/translate.js "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -878,13 +878,97 @@ Examples:
 				<true/>
 			</dict>
 			<key>description</key>
-			<string>Your Amazon Bedrock bearer token. If empty, uses AWS_BEARER_TOKEN_BEDROCK environment variable.</string>
+			<string>Your Amazon Bedrock bearer token. If empty, uses AWS_BEARER_TOKEN_BEDROCK, then IAM Identity Center (SSO) settings below.</string>
 			<key>label</key>
 			<string>Bedrock API Token</string>
 			<key>type</key>
 			<string>textfield</string>
 			<key>variable</key>
 			<string>token</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string></string>
+				<key>placeholder</key>
+				<string>https://my-org.awsapps.com/start</string>
+				<key>required</key>
+				<false/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>IAM Identity Center access portal URL. With SSO Role Name, a short-term Bedrock key is generated and cached until it expires.</string>
+			<key>label</key>
+			<string>SSO Start URL</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>sso_start_url</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>eu-west-1</string>
+				<key>placeholder</key>
+				<string>eu-west-1</string>
+				<key>required</key>
+				<false/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>Region of the IAM Identity Center instance.</string>
+			<key>label</key>
+			<string>SSO Region</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>sso_region</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string></string>
+				<key>placeholder</key>
+				<string>MyBedrockRole</string>
+				<key>required</key>
+				<false/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>IAM Identity Center permission set (role) used to generate the Bedrock key.</string>
+			<key>label</key>
+			<string>SSO Role Name</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>sso_role_name</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string></string>
+				<key>placeholder</key>
+				<string>123456789012</string>
+				<key>required</key>
+				<false/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>AWS account of the role. Optional when the role exists in a single account.</string>
+			<key>label</key>
+			<string>SSO Account ID</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>sso_account_id</string>
 		</dict>
 		<dict>
 			<key>config</key>
@@ -945,6 +1029,10 @@ Examples:
 	<key>variablesdontexport</key>
 	<array>
 		<string>token</string>
+		<string>sso_start_url</string>
+		<string>sso_region</string>
+		<string>sso_role_name</string>
+		<string>sso_account_id</string>
 	</array>
 	<key>version</key>
 	<string>1.0.0</string>

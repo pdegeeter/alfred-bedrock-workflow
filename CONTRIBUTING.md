@@ -19,7 +19,9 @@ Contributions are welcome! Here's how you can help.
 - TypeScript with strict mode
 - ESLint with `no-console` rule
 - Prettier for formatting
-- No runtime dependencies (uses native fetch)
+- No runtime dependencies (uses native fetch and `node:crypto` for SigV4 signing)
+- One class or one interface per file; shared interfaces live in `src/Type/`
+- Never commit real SSO start URLs, role names, account IDs or tokens: use placeholders such as `https://my-org.awsapps.com/start` and `123456789012`
 
 ## Before Submitting
 
