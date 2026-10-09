@@ -11,18 +11,7 @@ export default defineConfig(
   {
     languageOptions: {
       parserOptions: {
-        projectService: {
-          allowDefaultProject: [
-            "test/*.ts",
-            "test/alfred/*.ts",
-            "test/cli/*.ts",
-            "test/client/*.ts",
-            "test/Client/*.ts",
-            "test/Command/*.ts",
-            "test/Helper/*.ts",
-            "test/Service/*.ts",
-          ],
-        },
+        project: "./tsconfig.eslint.json",
         tsconfigRootDir: import.meta.dirname,
       },
     },
