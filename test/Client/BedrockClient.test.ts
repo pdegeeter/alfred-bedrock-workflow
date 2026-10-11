@@ -128,4 +128,86 @@ void describe("BedrockClient", () => {
       );
     });
   });
+
+  void describe("request by model generation", () => {
+    const respond = (content: unknown[]) => {
+      const fetchMock = mock.fn<(url: string, init: RequestInit) => Promise<Response>>(() =>
+        Promise.resolve(new Response(JSON.stringify({ output: { message: { content } } }), { status: 200 }))
+      );
+      global.fetch = fetchMock as unknown as typeof fetch;
+
+      return fetchMock;
+    };
+    const sentBody = (fetchMock: ReturnType<typeof respond>) =>
+      JSON.parse(fetchMock.mock.calls[0].arguments[1].body as string) as Record<string, unknown>;
+
+    void it("sends the effort level without temperature to Claude 5 models", async () => {
+      const fetchMock = respond([{ text: "OK" }]);
+
+      await new BedrockClient({ effort: "low", modelId: "eu.anthropic.claude-haiku-5-5", token: "t" }).chat("Hi");
+
+      const body = sentBody(fetchMock);
+      assert.deepStrictEqual(body["additionalModelRequestFields"], { output_config: { effort: "low" } });
+      assert.deepStrictEqual(body["inferenceConfig"], { maxTokens: 128000 });
+    });
+
+    void it("lets Claude 5 models use their default effort when no level is set", async () => {
+      const fetchMock = respond([{ text: "OK" }]);
+
+      await new BedrockClient({ modelId: "eu.anthropic.claude-haiku-5-5", token: "t" }).chat("Hi");
+
+      assert.strictEqual(sentBody(fetchMock)["additionalModelRequestFields"], undefined);
+    });
+
+    void it("sends temperature without effort to older models", async () => {
+      const fetchMock = respond([{ text: "OK" }]);
+
+      await new BedrockClient({
+        effort: "high",
+        modelId: "eu.anthropic.claude-haiku-4-5-20251001-v1:0",
+        token: "t",
+      }).chat("Hi");
+
+      const body = sentBody(fetchMock);
+      assert.strictEqual(body["additionalModelRequestFields"], undefined);
+      assert.deepStrictEqual(body["inferenceConfig"], { maxTokens: 64000, temperature: 0.7 });
+    });
+
+    void it("fails when the model declines the request", async () => {
+      for (const stopReason of ["refusal", "content_filtered", "guardrail_intervened"]) {
+        global.fetch = (() =>
+          Promise.resolve(
+            new Response(JSON.stringify({ output: { message: { content: [] } }, stopReason }), { status: 200 })
+          )) as unknown as typeof fetch;
+
+        await assert.rejects(
+          new BedrockClient({ modelId: "eu.anthropic.claude-haiku-5-5", token: "t" }).chat("Hi"),
+          new RegExp(`Bedrock declined the request \\(${stopReason}\\)`)
+        );
+      }
+    });
+
+    void it("flags a response cut at the output limit", async () => {
+      global.fetch = (() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({ output: { message: { content: [{ text: "Partial" }] } }, stopReason: "max_tokens" }),
+            { status: 200 }
+          )
+        )) as unknown as typeof fetch;
+
+      const result = await new BedrockClient({ modelId: "eu.anthropic.claude-haiku-5-5", token: "t" }).chat("Hi");
+
+      assert.match(result, /^Partial\n\n_\[Response truncated: output limit reached\]_$/);
+    });
+
+    void it("skips reasoning blocks and joins the text blocks", async () => {
+      respond([{ reasoningContent: { reasoningText: { text: "" } } }, { text: "Hello " }, { text: "world" }]);
+
+      const result = await new BedrockClient({ modelId: "eu.anthropic.claude-haiku-5-5", token: "t" }).chat("Hi");
+
+      assert.strictEqual(result, "Hello world");
+    });
+  });
 });
+

@@ -1,13 +1,5 @@
 import { BedrockClient } from "../Client/BedrockClient.js";
-
-/**
- * Configuration for ChatService.
- */
-export interface ChatConfig {
-  model: string;
-  systemPrompt?: string;
-  token: string;
-}
+import type { ChatConfig } from "../Type/ChatConfig.js";
 
 /**
  * Service for handling chat interactions with Bedrock.
@@ -17,6 +9,7 @@ export class ChatService {
 
   constructor(config: ChatConfig) {
     this.client = new BedrockClient({
+      effort: config.effort,
       modelId: config.model,
       systemPrompt: config.systemPrompt,
       token: config.token,

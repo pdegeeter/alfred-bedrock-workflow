@@ -42,7 +42,8 @@ Configure the following variables in Alfred workflow settings:
 | `sso_region`     | No       | IAM Identity Center region (default: `eu-west-1`)                         |
 | `sso_account_id` | No       | AWS account of the role; auto-discovered if the role is in one account    |
 | `browser`        | No       | Application opening the SSO login, e.g. `Brave Browser` (default browser) |
-| `model`          | No       | Select from dropdown (default: Claude Haiku 4.5 EU)                       |
+| `model`          | No       | Select from dropdown (default: Claude Haiku 5.5 EU)                       |
+| `level`          | No       | Effort level of Claude 5 models: `low` (default), `medium`, `high`, `xhigh`, `max` |
 | `default_lang`   | No       | Default target language for translations (e.g., en, fr, de)               |
 
 \* Set one of `token`, `aws_profile`, or `sso_start_url` and `sso_role_name`. They are used in this order; `AWS_BEARER_TOKEN_BEDROCK` is the last resort.
@@ -97,7 +98,7 @@ The spell checker preserves the original language and formatting while fixing sp
 
 1. Open Alfred
 2. Type `translate` followed by text to translate
-3. Use `:lang` prefix to specify target language (optional)
+3. Use `:lang` prefix to specify target language (optional). Without the colon, only known codes (de, en, es, fr, it, ja, ko, nl, pl, pt, ru, zh) are read as a language, so text starting with a short word such as "Le chat" is translated as a whole
 
 Examples:
 
@@ -143,12 +144,26 @@ Available hotkeys:
 
 Available models in the dropdown:
 
-| Model            | Region |
-| ---------------- | ------ |
-| Claude Haiku 4.5 | EU     |
-| Claude Sonnet 4  | EU     |
-| Claude Haiku 4.5 | US     |
-| Claude Sonnet 4  | US     |
+| Model                      | Region         |
+| -------------------------- | -------------- |
+| Claude Haiku 5.5 (default) | EU, US, Global |
+| Claude Sonnet 5.5          | EU, US, Global |
+| Claude Sonnet 5            | EU, US, Global |
+| Claude Haiku 4.5           | EU, US         |
+
+### Level
+
+Claude 5 models think adaptively; `level` sets their effort (thinking depth, latency and cost):
+
+| Level    | Use                                                              |
+| -------- | ---------------------------------------------------------------- |
+| `low`    | Default. Spell check, translation, short answers; matches Claude Haiku 4.5 |
+| `medium` | Default of the model when no level is sent; more careful answers |
+| `high`   | Harder reasoning                                                 |
+| `xhigh`  | Complex, multi-step questions                                    |
+| `max`    | When correctness matters more than latency and cost              |
+
+Older models ignore `level`. Claude 5 models reject `temperature`, so the workflow only sends it to older models.
 
 ## License
 
