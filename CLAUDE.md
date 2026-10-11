@@ -14,7 +14,7 @@ Alfred Bedrock Workflow is an Alfred workflow, written in Rust, that integrates 
 - `make install` - Same, then open the package in Alfred
 - `make clean` - Remove build outputs
 
-CI (`.github/workflows/ci.yml`) runs `make check` on `macos-latest`. Releases are managed by release-please (`.github/workflows/release-please.yml`): conventional commits on `main` feed a release PR that bumps `Cargo.toml`, `Cargo.lock` and `info.plist` (XML updater on the top-level `version` key) and updates `CHANGELOG.md`; merging it tags the release, and the `upload` job attaches `bedrock.alfredworkflow`. Never bump versions by hand. Commit messages and PR titles must follow Conventional Commits.
+CI (`.github/workflows/ci.yml`) runs `make check` on `macos-latest`. Releases are managed by release-please (`.github/workflows/release-please.yml`): conventional commits on `main` feed a release PR that bumps `Cargo.toml`, `Cargo.lock` and `info.plist` (XML updater on the top-level `version` key) and updates `CHANGELOG.md`; merging it tags the release, and the `upload` job attaches `bedrock.alfredworkflow`. Never bump versions by hand. Commit messages and PR titles must follow Conventional Commits. Dependabot opens weekly `ci:` PRs for GitHub Actions and `chore(deps):` PRs for Cargo.
 
 How the workflow works is documented in `docs/`: `architecture.md`, `authentication.md`, `bedrock-requests.md`.
 
