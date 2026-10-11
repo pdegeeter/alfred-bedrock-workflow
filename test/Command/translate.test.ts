@@ -5,6 +5,7 @@ import {
   createErrorResponse,
   createScriptFilterResponse,
 } from "../../src/Helper/AlfredOutput.js";
+import { TranslationQuery } from "../../src/Helper/TranslationQuery.js";
 
 void describe("translate command", () => {
   void describe("createScriptFilterResponse integration", () => {
@@ -32,51 +33,56 @@ void describe("translate command", () => {
     });
   });
 
-  void describe("parseQuery", () => {
-    // Test the query parsing logic inline
-    const parseQuery = (
-      query: string,
-      defaultLang: string
-    ): { lang: string; text: string } => {
-      const match = /^:?([a-zA-Z]{2})\s+(.+)$/s.exec(query);
-      if (match) {
-        return { lang: match[1].toLowerCase(), text: match[2] };
-      }
-      return { lang: defaultLang, text: query };
-    };
+  void describe("TranslationQuery", () => {
+    const parse = (query: string) => new TranslationQuery(query, "en");
 
     void it("uses default language when no prefix", () => {
-      const result = parseQuery("Hello world", "en");
+      const result = parse("Hello world");
       assert.strictEqual(result.lang, "en");
       assert.strictEqual(result.text, "Hello world");
     });
 
     void it("extracts language from :lang prefix", () => {
-      const result = parseQuery(":fr Hello world", "en");
+      const result = parse(":fr Hello world");
+      assert.strictEqual(result.lang, "fr");
+      assert.strictEqual(result.languageName, "French");
+      assert.strictEqual(result.text, "Hello world");
+    });
+
+    void it("extracts a known language from a prefix without colon", () => {
+      const result = parse("fr Hello world");
       assert.strictEqual(result.lang, "fr");
       assert.strictEqual(result.text, "Hello world");
     });
 
-    void it("extracts language from lang prefix without colon", () => {
-      const result = parseQuery("fr Hello world", "en");
-      assert.strictEqual(result.lang, "fr");
+    void it("keeps a leading short word that is not a known language", () => {
+      for (const query of ["Le chat dort", "La maison", "Un jour", "Il pleut"]) {
+        const result = parse(query);
+        assert.strictEqual(result.lang, "en");
+        assert.strictEqual(result.text, query);
+      }
+    });
+
+    void it("accepts an unknown code when the colon makes it explicit", () => {
+      const result = parse(":sv Hello world");
+      assert.strictEqual(result.lang, "sv");
+      assert.strictEqual(result.languageName, "sv");
       assert.strictEqual(result.text, "Hello world");
     });
 
     void it("handles uppercase language codes", () => {
-      const result = parseQuery(":FR Hello world", "en");
+      const result = parse(":FR Hello world");
       assert.strictEqual(result.lang, "fr");
-      assert.strictEqual(result.text, "Hello world");
     });
 
     void it("preserves multiline text", () => {
-      const result = parseQuery(":de Line 1\nLine 2", "en");
+      const result = parse(":de Line 1\nLine 2");
       assert.strictEqual(result.lang, "de");
       assert.strictEqual(result.text, "Line 1\nLine 2");
     });
 
     void it("does not match invalid prefixes", () => {
-      const result = parseQuery(":abc Hello world", "en");
+      const result = parse(":abc Hello world");
       assert.strictEqual(result.lang, "en");
       assert.strictEqual(result.text, ":abc Hello world");
     });

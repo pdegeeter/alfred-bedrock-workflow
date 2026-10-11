@@ -1016,24 +1016,52 @@ Examples:
 			<key>config</key>
 			<dict>
 				<key>default</key>
-				<string>eu.anthropic.claude-haiku-4-5-20251001-v1:0</string>
+				<string>eu.anthropic.claude-haiku-5-5</string>
 				<key>pairs</key>
 				<array>
+					<array>
+						<string>EU - Claude Haiku 5.5</string>
+						<string>eu.anthropic.claude-haiku-5-5</string>
+					</array>
+					<array>
+						<string>US - Claude Haiku 5.5</string>
+						<string>us.anthropic.claude-haiku-5-5</string>
+					</array>
+					<array>
+						<string>Global - Claude Haiku 5.5</string>
+						<string>global.anthropic.claude-haiku-5-5</string>
+					</array>
+					<array>
+						<string>EU - Claude Sonnet 5.5</string>
+						<string>eu.anthropic.claude-sonnet-5-5</string>
+					</array>
+					<array>
+						<string>US - Claude Sonnet 5.5</string>
+						<string>us.anthropic.claude-sonnet-5-5</string>
+					</array>
+					<array>
+						<string>Global - Claude Sonnet 5.5</string>
+						<string>global.anthropic.claude-sonnet-5-5</string>
+					</array>
+					<array>
+						<string>EU - Claude Sonnet 5</string>
+						<string>eu.anthropic.claude-sonnet-5</string>
+					</array>
+					<array>
+						<string>US - Claude Sonnet 5</string>
+						<string>us.anthropic.claude-sonnet-5</string>
+					</array>
+					<array>
+						<string>Global - Claude Sonnet 5</string>
+						<string>global.anthropic.claude-sonnet-5</string>
+					</array>
 					<array>
 						<string>EU - Claude Haiku 4.5</string>
 						<string>eu.anthropic.claude-haiku-4-5-20251001-v1:0</string>
 					</array>
 					<array>
-						<string>EU - Claude Sonnet 4</string>
-						<string>eu.anthropic.claude-sonnet-4-20250514-v1:0</string>
-					</array>
-					<array>
 						<string>US - Claude Haiku 4.5</string>
 						<string>us.anthropic.claude-haiku-4-5-20251001-v1:0</string>
-					</array>
-					<array>
-						<string>US - Claude Sonnet 4</string>
-						<string>us.anthropic.claude-sonnet-4-20250514-v1:0</string>
 					</array>
 				</array>
 			</dict>
@@ -1045,6 +1073,44 @@ Examples:
 			<string>popupbutton</string>
 			<key>variable</key>
 			<string>model</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>low</string>
+				<key>pairs</key>
+				<array>
+					<array>
+						<string>Low</string>
+						<string>low</string>
+					</array>
+					<array>
+						<string>Medium</string>
+						<string>medium</string>
+					</array>
+					<array>
+						<string>High</string>
+						<string>high</string>
+					</array>
+					<array>
+						<string>Extra high</string>
+						<string>xhigh</string>
+					</array>
+					<array>
+						<string>Max</string>
+						<string>max</string>
+					</array>
+				</array>
+			</dict>
+			<key>description</key>
+			<string>Effort level of Claude 5 models: thinking depth, latency and cost. Low matches Claude Haiku 4.5. Ignored by older models.</string>
+			<key>label</key>
+			<string>Level</string>
+			<key>type</key>
+			<string>popupbutton</string>
+			<key>variable</key>
+			<string>level</string>
 		</dict>
 		<dict>
 			<key>config</key>
