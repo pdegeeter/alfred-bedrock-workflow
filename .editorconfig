@@ -1,4 +1,4 @@
-# http://editorconfig.org
+# https://editorconfig.org
 root = true
 
 [*]
@@ -9,7 +9,19 @@ indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[{Makefile,*.md}]
+# Same settings as rustfmt.toml
+[*.rs]
+indent_size = 4
+max_line_length = 120
+
+[*.sh]
+indent_size = 4
+
+[Makefile]
+indent_style = tab
+
+# Alfred writes info.plist with tabs
+[*.plist]
 indent_style = tab
 
 [*.md]

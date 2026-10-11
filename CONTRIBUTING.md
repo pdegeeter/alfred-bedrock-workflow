@@ -22,6 +22,7 @@ Contributions are welcome! Here's how you can help.
 - Rust 2024 edition, `unsafe_code` forbidden
 - Clippy with the `pedantic` group (see `[lints]` in `Cargo.toml`); warnings fail the CI
 - `rustfmt` for formatting (`rustfmt.toml`)
+- `.editorconfig` aligns editors with these settings: 4 spaces and 120 columns for Rust, tabs for `Makefile` and `info.plist`
 - One struct, enum or trait per file; traits shared across modules live in `src/types/`
 - Constants and helpers are associated items (`const`, `fn`) of the type using them, not free items
 - External systems are reached through ports injected from `main.rs`: `HttpClient` (HTTPS) and `UrlOpener` (browser)
