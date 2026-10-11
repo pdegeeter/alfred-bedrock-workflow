@@ -37,4 +37,15 @@ void describe("BedrockTokenGenerator", () => {
     assert.match(url, /X-Amz-Expires=43200/);
     assert.match(url, /&Version=1$/);
   });
+
+  void it("omits the security token for long-term credentials", () => {
+    const token = new BedrockTokenGenerator("eu-west-1").generate({
+      accessKeyId: "AKIALONGTERM",
+      secretAccessKey: credentials.secretAccessKey,
+    });
+    const url = Buffer.from(token.replace("bedrock-api-key-", ""), "base64").toString("utf-8");
+
+    assert.doesNotMatch(url, /X-Amz-Security-Token/);
+    assert.match(url, /X-Amz-Credential=AKIALONGTERM%2F/);
+  });
 });

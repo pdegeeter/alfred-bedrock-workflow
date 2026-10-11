@@ -41,9 +41,11 @@ export class BedrockTokenGenerator {
       "X-Amz-Credential": `${credentials.accessKeyId}/${scope}`,
       "X-Amz-Date": amzDate,
       "X-Amz-Expires": String(BedrockTokenGenerator.MAX_TTL_SECONDS),
-      "X-Amz-Security-Token": credentials.sessionToken,
       "X-Amz-SignedHeaders": "host",
     };
+    if (credentials.sessionToken) {
+      params["X-Amz-Security-Token"] = credentials.sessionToken;
+    }
 
     const canonicalRequest = [
       "POST",

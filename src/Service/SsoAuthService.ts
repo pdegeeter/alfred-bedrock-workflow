@@ -32,12 +32,14 @@ export class SsoAuthService {
     }
 
     const registration = await this.getRegistration();
+    // Re-read: a new registration drops the tokens issued to the previous client.
+    const refreshToken = this.cache.load().ssoToken?.refreshToken;
 
-    if (ssoToken?.refreshToken) {
+    if (refreshToken) {
       try {
-        const refreshed = await this.oidc.refresh(registration, ssoToken.refreshToken);
+        const refreshed = await this.oidc.refresh(registration, refreshToken);
         this.cache.update((state) => {
-          state.ssoToken = { refreshToken: ssoToken.refreshToken, ...refreshed };
+          state.ssoToken = { refreshToken, ...refreshed };
         });
 
         return refreshed.accessToken;

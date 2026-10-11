@@ -6,7 +6,7 @@ An Alfred workflow to interact with Amazon Bedrock models directly from Alfred.
 
 - [Alfred 5+](https://www.alfredapp.com/) with Powerpack
 - [Node.js 24+](https://nodejs.org/)
-- Amazon Bedrock API key (bearer token), or an IAM Identity Center (SSO) role allowed to call Bedrock
+- Amazon Bedrock API key (bearer token), an AWS CLI v2 profile, or an IAM Identity Center (SSO) role allowed to call Bedrock
 
 ## Installation
 
@@ -35,7 +35,8 @@ Configure the following variables in Alfred workflow settings:
 
 | Variable         | Required | Description                                                               |
 | ---------------- | -------- | ------------------------------------------------------------------------- |
-| `token`          | No\*     | Bedrock API bearer token (falls back to `AWS_BEARER_TOKEN_BEDROCK`)       |
+| `token`          | No\*     | Static Bedrock API bearer token                                           |
+| `aws_profile`    | No\*     | AWS CLI profile used to generate short-term keys                          |
 | `sso_start_url`  | No\*     | IAM Identity Center access portal URL                                     |
 | `sso_role_name`  | No\*     | IAM Identity Center role (permission set) used to generate the key        |
 | `sso_region`     | No       | IAM Identity Center region (default: `eu-west-1`)                         |
@@ -44,13 +45,24 @@ Configure the following variables in Alfred workflow settings:
 | `model`          | No       | Select from dropdown (default: Claude Haiku 4.5 EU)                       |
 | `default_lang`   | No       | Default target language for translations (e.g., en, fr, de)               |
 
-\* Set either `token`, or `sso_start_url` and `sso_role_name`.
+\* Set one of `token`, `aws_profile`, or `sso_start_url` and `sso_role_name`. They are used in this order; `AWS_BEARER_TOKEN_BEDROCK` is the last resort.
 
 Region is auto-detected from the model prefix.
 
+### Authentication with an AWS CLI profile
+
+Set `aws_profile` to any profile of your `~/.aws/config` (requires [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)). The workflow reads its credentials with `aws configure export-credentials` and signs a short-term key from them, cached like below.
+
+Login is handled by the profile itself:
+
+- **IAM Identity Center profile**: when the session expired, the workflow runs `aws sso login --profile <profile>` and retries.
+- **[Granted](https://docs.commonfate.io/granted/introduction) profile** (`credential_process = granted credential-process --auto-login --profile <profile>`): Granted opens its configured browser, and its browser extension confirms the login automatically.
+
+This is the recommended setup when you already use the AWS CLI or Granted: one SSO session is shared by all your tools.
+
 ### Authentication with IAM Identity Center
 
-When no static token is configured, the workflow generates a Bedrock [short-term API key](https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys.md) itself:
+Without AWS CLI, the workflow can log in to IAM Identity Center itself and generate a Bedrock [short-term API key](https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys.md) itself:
 
 1. On first use, your browser opens the IAM Identity Center login page. Approve the request; Alfred shows the spinner until you do.
 2. The workflow fetches temporary credentials for the configured role and signs a short-term key locally.
@@ -62,6 +74,8 @@ The role needs the `bedrock:CallWithBearerToken` permission in addition to the m
 Tokens are cached in Alfred's workflow cache folder (`auth.json`, readable only by your user). Delete this file to force a new login.
 
 SSO settings are excluded from workflow exports.
+
+> The [Granted browser extension](https://docs.commonfate.io/granted/introduction) blocks the confirmation of logins it did not start. If you use it, prefer `aws_profile` with a Granted profile.
 
 ## Usage
 
