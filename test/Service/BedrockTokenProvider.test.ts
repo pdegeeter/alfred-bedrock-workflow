@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, it, mock } from "node:test";
 
 import { BrowserLauncher } from "../../src/Helper/BrowserLauncher.js";
 import { BedrockTokenProvider } from "../../src/Service/BedrockTokenProvider.js";
+import { FakeAwsCli } from "../Fixture/FakeAwsCli.js";
 
 interface FakeIdentityCenter {
   calls: string[];
@@ -96,6 +97,17 @@ void describe("BedrockTokenProvider", () => {
       await assert.rejects(provider.getToken("eu-west-1"), /Bedrock token not configured/);
     });
 
+    void it("prefers IAM Identity Center over AWS_BEARER_TOKEN_BEDROCK", async () => {
+      const provider = BedrockTokenProvider.fromEnvironment({
+        AWS_BEARER_TOKEN_BEDROCK: "expired-env-token",
+        alfred_workflow_cache: cacheDir,
+        sso_role_name: sso.roleName,
+        sso_start_url: sso.startUrl,
+      });
+
+      assert.match(await provider.getToken("eu-west-1"), /^bedrock-api-key-/);
+    });
+
     void it("rejects a start URL without role name", () => {
       assert.throws(
         () => BedrockTokenProvider.fromEnvironment({ sso_start_url: sso.startUrl }),
@@ -106,7 +118,7 @@ void describe("BedrockTokenProvider", () => {
 
   void describe("with IAM Identity Center", () => {
     void it("logs in through the browser and returns a short-term key", async () => {
-      const token = await new BedrockTokenProvider("", sso, cacheDir).getToken("eu-west-1");
+      const token = await new BedrockTokenProvider({ cacheDir, sso }).getToken("eu-west-1");
 
       assert.match(token, /^bedrock-api-key-/);
       assert.strictEqual(openBrowser.mock.callCount(), 1);
@@ -122,10 +134,10 @@ void describe("BedrockTokenProvider", () => {
     });
 
     void it("reuses the cached key across processes while it is valid", async () => {
-      const first = await new BedrockTokenProvider("", sso, cacheDir).getToken("eu-west-1");
+      const first = await new BedrockTokenProvider({ cacheDir, sso }).getToken("eu-west-1");
       idc.calls = [];
 
-      const second = await new BedrockTokenProvider("", sso, cacheDir).getToken("eu-west-1");
+      const second = await new BedrockTokenProvider({ cacheDir, sso }).getToken("eu-west-1");
 
       assert.strictEqual(second, first);
       assert.deepStrictEqual(idc.calls, []);
@@ -133,12 +145,12 @@ void describe("BedrockTokenProvider", () => {
 
     void it("caps the key lifetime to the role session and renews it without browser", async () => {
       mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-01-15T08:00:00Z") });
-      await new BedrockTokenProvider("", sso, cacheDir).getToken("eu-west-1");
+      await new BedrockTokenProvider({ cacheDir, sso }).getToken("eu-west-1");
       idc.calls = [];
 
       // Role session is 1h: the key must not be served past it even though SigV4 allows 12h.
       mock.timers.setTime(Date.parse("2026-01-15T08:56:00Z"));
-      await new BedrockTokenProvider("", sso, cacheDir).getToken("eu-west-1");
+      await new BedrockTokenProvider({ cacheDir, sso }).getToken("eu-west-1");
 
       assert.deepStrictEqual(idc.calls, ["/federation/credentials"]);
       assert.strictEqual(openBrowser.mock.callCount(), 1);
@@ -147,48 +159,48 @@ void describe("BedrockTokenProvider", () => {
     void it("keeps the key up to 12 hours when the role session is longer", async () => {
       idc.credentialsTtlMs = 13 * 3_600_000;
       mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-01-15T08:00:00Z") });
-      await new BedrockTokenProvider("", sso, cacheDir).getToken("eu-west-1");
+      await new BedrockTokenProvider({ cacheDir, sso }).getToken("eu-west-1");
       idc.calls = [];
 
       mock.timers.setTime(Date.parse("2026-01-15T19:50:00Z"));
-      await new BedrockTokenProvider("", sso, cacheDir).getToken("eu-west-1");
+      await new BedrockTokenProvider({ cacheDir, sso }).getToken("eu-west-1");
       assert.deepStrictEqual(idc.calls, []);
 
       mock.timers.setTime(Date.parse("2026-01-15T19:56:00Z"));
-      await new BedrockTokenProvider("", sso, cacheDir).getToken("eu-west-1");
+      await new BedrockTokenProvider({ cacheDir, sso }).getToken("eu-west-1");
       assert.deepStrictEqual(idc.calls, ["/token", "/federation/credentials"]);
     });
 
     void it("generates one key per region", async () => {
-      const eu = await new BedrockTokenProvider("", sso, cacheDir).getToken("eu-west-1");
+      const eu = await new BedrockTokenProvider({ cacheDir, sso }).getToken("eu-west-1");
       idc.calls = [];
 
-      const us = await new BedrockTokenProvider("", sso, cacheDir).getToken("us-east-1");
+      const us = await new BedrockTokenProvider({ cacheDir, sso }).getToken("us-east-1");
 
       assert.notStrictEqual(us, eu);
       assert.deepStrictEqual(idc.calls, ["/federation/credentials"]);
     });
 
     void it("opens the login in the configured browser", async () => {
-      await new BedrockTokenProvider("", { ...sso, browser: "Brave Browser" }, cacheDir).getToken("eu-west-1");
+      await new BedrockTokenProvider({ cacheDir, sso: { ...sso, browser: "Brave Browser" } }).getToken("eu-west-1");
 
       assert.deepStrictEqual(openBrowser.mock.calls[0].arguments, ["https://verify", "Brave Browser"]);
     });
 
     void it("skips account discovery when the account ID is configured", async () => {
-      await new BedrockTokenProvider("", { ...sso, accountId: "444455556666" }, cacheDir).getToken("eu-west-1");
+      await new BedrockTokenProvider({ cacheDir, sso: { ...sso, accountId: "444455556666" } }).getToken("eu-west-1");
 
       assert.ok(!idc.calls.includes("/assignment/accounts"));
     });
 
     void it("logs in again when the SSO session was revoked", async () => {
       mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-01-15T08:00:00Z") });
-      await new BedrockTokenProvider("", sso, cacheDir).getToken("eu-west-1");
+      await new BedrockTokenProvider({ cacheDir, sso }).getToken("eu-west-1");
       idc.calls = [];
       idc.nextCredentialsStatus = 401;
 
       mock.timers.setTime(Date.parse("2026-01-15T09:00:00Z"));
-      const token = await new BedrockTokenProvider("", sso, cacheDir).getToken("eu-west-1");
+      const token = await new BedrockTokenProvider({ cacheDir, sso }).getToken("eu-west-1");
 
       assert.match(token, /^bedrock-api-key-/);
       assert.deepStrictEqual(idc.calls, [
@@ -198,6 +210,69 @@ void describe("BedrockTokenProvider", () => {
         "/federation/credentials",
       ]);
       assert.strictEqual(openBrowser.mock.callCount(), 2);
+    });
+  });
+
+  void describe("with an AWS CLI profile", () => {
+    let aws: FakeAwsCli;
+
+    beforeEach(() => {
+      aws = new FakeAwsCli();
+    });
+
+    afterEach(() => {
+      aws.restore();
+    });
+
+    void it("signs the key with the profile credentials and caches it", async () => {
+      const first = await new BedrockTokenProvider({ awsProfile: "my-profile", cacheDir }).getToken("eu-west-1");
+      const second = await new BedrockTokenProvider({ awsProfile: "my-profile", cacheDir }).getToken("eu-west-1");
+
+      assert.match(first, /^bedrock-api-key-/);
+      assert.strictEqual(second, first);
+      assert.strictEqual(aws.calls.length, 1);
+      assert.deepStrictEqual(idc.calls, []);
+    });
+
+    void it("takes precedence over the IAM Identity Center settings", async () => {
+      await new BedrockTokenProvider({ awsProfile: "my-profile", cacheDir, sso }).getToken("eu-west-1");
+
+      assert.strictEqual(aws.calls.length, 1);
+      assert.deepStrictEqual(idc.calls, []);
+      assert.strictEqual(openBrowser.mock.callCount(), 0);
+    });
+
+    void it("is read from the aws_profile variable", async () => {
+      const provider = BedrockTokenProvider.fromEnvironment({
+        AWS_BEARER_TOKEN_BEDROCK: "expired-env-token",
+        alfred_workflow_cache: cacheDir,
+        aws_profile: "my-profile",
+      });
+
+      assert.match(await provider.getToken("eu-west-1"), /^bedrock-api-key-/);
+      assert.deepStrictEqual(aws.calls, ["configure export-credentials --profile my-profile --format process"]);
+    });
+
+    void it("caps the key lifetime to the profile credentials expiration", async () => {
+      mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-01-15T08:00:00Z") });
+      aws.setExpiration(new Date("2026-01-15T09:00:00Z"));
+      await new BedrockTokenProvider({ awsProfile: "my-profile", cacheDir }).getToken("eu-west-1");
+
+      mock.timers.setTime(Date.parse("2026-01-15T08:56:00Z"));
+      await new BedrockTokenProvider({ awsProfile: "my-profile", cacheDir }).getToken("eu-west-1");
+
+      assert.strictEqual(aws.calls.length, 2);
+    });
+
+    void it("keeps a key signed with long-term credentials for 12 hours", async () => {
+      aws.setMode("long-term");
+      mock.timers.enable({ apis: ["Date"], now: Date.parse("2026-01-15T08:00:00Z") });
+      await new BedrockTokenProvider({ awsProfile: "my-profile", cacheDir }).getToken("eu-west-1");
+
+      mock.timers.setTime(Date.parse("2026-01-15T19:50:00Z"));
+      await new BedrockTokenProvider({ awsProfile: "my-profile", cacheDir }).getToken("eu-west-1");
+
+      assert.strictEqual(aws.calls.length, 1);
     });
   });
 });

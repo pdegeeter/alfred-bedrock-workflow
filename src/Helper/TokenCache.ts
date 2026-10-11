@@ -2,7 +2,7 @@ import type { TokenCacheState } from "../Type/TokenCacheState.js";
 import { JsonFileStore } from "./JsonFileStore.js";
 
 /**
- * Persisted authentication state. Entries from another SSO scope are discarded.
+ * Persisted authentication state. Entries from another credentials source are discarded.
  */
 export class TokenCache {
   private readonly scope: string;
@@ -10,7 +10,7 @@ export class TokenCache {
 
   /**
    * @param path - Cache file path
-   * @param scope - Identifies the SSO instance (start URL and region)
+   * @param scope - Identifies the credentials source owning the state
    */
   constructor(path: string, scope: string) {
     this.scope = scope;
