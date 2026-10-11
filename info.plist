@@ -1156,7 +1156,7 @@ Examples:
 		<string>sso_account_id</string>
 	</array>
 	<key>version</key>
-	<string>1.0.0</string>
+	<string>1.1.0</string>
 	<key>webaddress</key>
 	<string>https://github.com/pdegeeter/alfred-bedrock-workflow</string>
 </dict>
