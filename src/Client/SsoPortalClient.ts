@@ -37,14 +37,15 @@ export class SsoPortalClient {
    * @throws When no account or several accounts expose the role
    */
   async findAccountIdForRole(roleName: string): Promise<string> {
-    const matches: string[] = [];
+    const accountIds = await this.listAccountIds();
+    const exposesRole = await Promise.all(
+      accountIds.map(async (accountId) => {
+        const roles = await this.paginate("/assignment/roles", "roleList", { account_id: accountId });
 
-    for (const accountId of await this.listAccountIds()) {
-      const roles = await this.paginate("/assignment/roles", "roleList", { account_id: accountId });
-      if ((roles as Array<{ roleName: string }>).some((role) => role.roleName === roleName)) {
-        matches.push(accountId);
-      }
-    }
+        return (roles as Array<{ roleName: string }>).some((role) => role.roleName === roleName);
+      })
+    );
+    const matches = accountIds.filter((_, index) => exposesRole[index]);
 
     if (matches.length === 0) {
       throw new Error(`No account exposes the SSO role "${roleName}"`);

@@ -20,16 +20,17 @@ Alfred Bedrock Workflow is a TypeScript-based Alfred workflow that integrates wi
 
 ```
 src/
-├── Client/   # Bedrock Runtime, IAM Identity Center OIDC and portal APIs
+├── Client/   # Bedrock Runtime, IAM Identity Center OIDC and portal APIs, AWS CLI
 ├── Command/  # Alfred entry points
 ├── Error/
 ├── Helper/   # Alfred output, region detection, short-term key signing, file cache
-├── Service/  # Chat, SSO login and Bedrock token resolution
+├── Service/  # Chat, credentials sources, SSO login and Bedrock token resolution
 └── Type/     # Shared interfaces (one per file)
 
 test/
 ├── Client/
 ├── Command/
+├── Fixture/  # Test doubles such as the fake `aws` executable
 ├── Helper/
 └── Service/
 ```
@@ -43,7 +44,8 @@ test/
 
 ## Alfred Configuration Variables
 
-- `token` (optional) - Bedrock API bearer token, falls back to `AWS_BEARER_TOKEN_BEDROCK`
+- `token` (optional) - Static Bedrock API bearer token
+- `aws_profile` (optional) - AWS CLI profile whose credentials sign short-term keys (`aws configure export-credentials`)
 - `sso_start_url`, `sso_role_name` (optional) - IAM Identity Center portal URL and role used to generate short-term keys when no static token is set
 - `sso_region` (optional) - IAM Identity Center region, default: `eu-west-1`
 - `sso_account_id` (optional) - AWS account of the role, auto-discovered when the role exists in a single account
@@ -59,11 +61,15 @@ Region is auto-detected from model prefix (`eu.` → `eu-west-1`, `us.`/`global.
 
 `BedrockTokenProvider` resolves the bearer token in this order:
 
-1. `token` variable, then `AWS_BEARER_TOKEN_BEDROCK`
-2. Cached short-term key for `<account>:<role>:<region>` (short-term keys are region-bound)
-3. New short-term key: IAM Identity Center access token (cache → refresh token → browser device login) → `GetRoleCredentials` → SigV4-presigned `CallWithBearerToken` URL (`BedrockTokenGenerator`, byte-identical to `@aws/bedrock-token-generator`)
+1. `token` variable
+2. A `CredentialsSource`, when configured:
+   - `AwsProfileCredentialsSource` (`aws_profile`): `aws configure export-credentials`, with one `aws sso login` retry on an expired SSO session
+   - `SsoCredentialsSource` (`sso_*`): IAM Identity Center access token (cache → refresh token → browser device login) → `GetRoleCredentials`
 
-A key is cached until `min(generation + 12h, role credentials expiration)`, minus a 5-minute margin. State is stored in `$alfred_workflow_cache/auth.json` (mode 0600). A pending device authorization is persisted so a script killed by Alfred resumes polling instead of opening a new browser tab.
+   A cached short-term key for `<source key prefix>:<region>` is reused (keys are region-bound); otherwise the credentials sign a new one as a SigV4-presigned `CallWithBearerToken` URL (`BedrockTokenGenerator`, byte-identical to `@aws/bedrock-token-generator`)
+3. `AWS_BEARER_TOKEN_BEDROCK`, last so an ambient variable never hides an explicit configuration
+
+A key is cached until `min(generation + 12h, credentials expiration)`, minus a 5-minute margin. State is stored in `$alfred_workflow_cache/auth.json` (mode 0600). A pending device authorization is persisted so a script killed by Alfred resumes polling instead of opening a new browser tab.
 
 ## Alfred Workflow Triggers
 

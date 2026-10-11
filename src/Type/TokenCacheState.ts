@@ -4,16 +4,16 @@ import type { SsoClientRegistration } from "./SsoClientRegistration.js";
 import type { SsoToken } from "./SsoToken.js";
 
 /**
- * Persisted authentication state, scoped to one SSO start URL and region.
+ * Persisted authentication state, scoped to one credentials source.
  */
 export interface TokenCacheState {
-  /** Keyed by `<accountId>:<roleName>:<region>`. */
+  /** Keyed by `<source key prefix>:<region>`. */
   bedrockKeys: Record<string, BedrockKey | undefined>;
   pendingAuthorization?: DeviceAuthorization;
   registration?: SsoClientRegistration;
   /** Keyed by role name. */
   resolvedAccountIds: Record<string, string | undefined>;
-  /** `<startUrl>|<region>` the SSO entries belong to. */
+  /** Credentials source the entries belong to. */
   scope: string;
   ssoToken?: SsoToken;
 }
