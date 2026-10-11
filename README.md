@@ -2,32 +2,47 @@
 
 An Alfred workflow to interact with Amazon Bedrock models directly from Alfred.
 
+The workflow is a single native binary: it does not depend on Node.js, Python or your shell configuration.
+
 ## Requirements
 
 - [Alfred 5+](https://www.alfredapp.com/) with Powerpack
-- [Node.js 24+](https://nodejs.org/)
+- macOS on Apple Silicon (arm64)
 - Amazon Bedrock API key (bearer token), an AWS CLI v2 profile, or an IAM Identity Center (SSO) role allowed to call Bedrock
 
 ## Installation
 
 ### From Release
 
-1. Download `alfred-bedrock-workflow.alfredworkflow` from the releases page
+1. Download `bedrock.alfredworkflow` from the [releases page](https://github.com/pdegeeter/alfred-bedrock-workflow/releases)
 2. Double-click to install in Alfred
 3. Configure authentication in the workflow settings
 
+The binary is not notarized. If macOS refuses to run it, remove the quarantine flag from the installed workflow folder (Alfred → Workflows → right-click the workflow → Open in Finder):
+
+```bash
+xattr -dr com.apple.quarantine "<workflow folder>"
+```
+
 ### From Source
 
+Requires a [Rust toolchain](https://rustup.rs/) (stable).
+
 1. Clone this repository
-2. Install dependencies:
+2. Build the workflow package and open it in Alfred:
    ```bash
-   pnpm install
+   make install
    ```
-3. Build the workflow package:
-   ```bash
-   pnpm workflow:build
-   ```
-4. Double-click `bedrock.alfredworkflow` to install
+
+## How It Works
+
+See [`docs/`](docs/):
+
+- [Architecture](docs/architecture.md): request flow, modules, configuration
+- [Authentication](docs/authentication.md): token resolution, short-term keys, AWS CLI profile, IAM Identity Center login, cache
+- [Bedrock requests](docs/bedrock-requests.md): region, request by model generation, prompts, response handling
+
+Release notes are in [CHANGELOG.md](CHANGELOG.md), generated on each release.
 
 ### Configuration
 
@@ -37,6 +52,7 @@ Configure the following variables in Alfred workflow settings:
 | ---------------- | -------- | ------------------------------------------------------------------------- |
 | `token`          | No\*     | Static Bedrock API bearer token                                           |
 | `aws_profile`    | No\*     | AWS CLI profile used to generate short-term keys                          |
+| `aws_cli_path`   | No       | Path of the AWS CLI, when not installed with Homebrew                     |
 | `sso_start_url`  | No\*     | IAM Identity Center access portal URL                                     |
 | `sso_role_name`  | No\*     | IAM Identity Center role (permission set) used to generate the key        |
 | `sso_region`     | No       | IAM Identity Center region (default: `eu-west-1`)                         |
@@ -53,6 +69,8 @@ Region is auto-detected from the model prefix.
 ### Authentication with an AWS CLI profile
 
 Set `aws_profile` to any profile of your `~/.aws/config` (requires [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)). The workflow reads its credentials with `aws configure export-credentials` and signs a short-term key from them, cached like below.
+
+Alfred runs workflows without your shell `PATH`, so the AWS CLI is looked up in this order: `aws_cli_path`, `/opt/homebrew/bin/aws`, `/usr/local/bin/aws`, then `aws` from the `PATH`. Set `aws_cli_path` when it is installed elsewhere (asdf, mise, pip...). The AWS CLI runs with its own directory and the Homebrew directories first on its `PATH`, so `credential_process` helpers installed with Homebrew, such as Granted, are found.
 
 Login is handled by the profile itself:
 
@@ -72,7 +90,7 @@ Without AWS CLI, the workflow can log in to IAM Identity Center itself and gener
 
 The role needs the `bedrock:CallWithBearerToken` permission in addition to the model invocation permissions. Keys are region-bound: switching between EU and US models generates one key per region.
 
-Tokens are cached in Alfred's workflow cache folder (`auth.json`, readable only by your user). Delete this file to force a new login.
+Tokens are cached in Alfred's workflow cache folder (`auth.json`, readable only by your user). Delete this file to force a new login. The cache format is unchanged since 1.x: upgrading keeps your SSO session.
 
 SSO settings are excluded from workflow exports.
 
@@ -136,9 +154,8 @@ Available hotkeys:
 
 ### Chat Features
 
-- **Persistent conversations**: Your chat history is saved between sessions
-- **Multi-turn support**: Continue conversations with follow-up questions
-- **Markdown rendering**: Responses are formatted with Markdown
+- **Markdown rendering**: Responses are formatted with Markdown in Text View
+- **Single turn**: each query is sent on its own, without the previous messages
 
 ## Supported Models
 
