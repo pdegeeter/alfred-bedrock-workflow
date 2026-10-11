@@ -149,6 +149,7 @@ Available models in the dropdown:
 | Claude Haiku 5.5 (default) | EU, US, Global |
 | Claude Sonnet 5.5          | EU, US, Global |
 | Claude Sonnet 5            | EU, US, Global |
+| Claude Opus 5.5            | EU, US, Global |
 | Claude Haiku 4.5           | EU, US         |
 
 ### Level

@@ -47,6 +47,7 @@ void describe("ModelFeatures", () => {
       ["eu.anthropic.claude-haiku-5-5", 128000],
       ["global.anthropic.claude-sonnet-5-5", 128000],
       ["eu.anthropic.claude-sonnet-5", 128000],
+      ["global.anthropic.claude-opus-5-5", 128000],
       ["eu.anthropic.claude-haiku-4-5-20251001-v1:0", 64000],
       ["us.anthropic.claude-sonnet-4-20250514-v1:0", 64000],
       ["us.anthropic.claude-opus-4-1-20250805-v1:0", 32000],
