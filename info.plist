@@ -372,7 +372,7 @@
 				<key>runningsubtext</key>
 				<string>Correcting...</string>
 				<key>script</key>
-				<string>source ~/.zshenv 2>/dev/null; PATH="$PATH:/opt/homebrew/bin:/usr/local/bin" node Command/aspell.js "$1"</string>
+				<string>./alfred-bedrock aspell "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -492,7 +492,7 @@
 				<key>runningsubtext</key>
 				<string>Asking Bedrock...</string>
 				<key>script</key>
-				<string>source ~/.zshenv 2>/dev/null; PATH="$PATH:/opt/homebrew/bin:/usr/local/bin" node Command/bedrock.js "$1"</string>
+				<string>./alfred-bedrock bedrock "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -612,7 +612,7 @@
 				<key>runningsubtext</key>
 				<string>Translating...</string>
 				<key>script</key>
-				<string>source ~/.zshenv 2>/dev/null; PATH="$PATH:/opt/homebrew/bin:/usr/local/bin" node Command/translate.js "$1"</string>
+				<string>./alfred-bedrock translate "$1"</string>
 				<key>scriptargtype</key>
 				<integer>1</integer>
 				<key>scriptfile</key>
@@ -913,6 +913,27 @@ Examples:
 				<key>default</key>
 				<string></string>
 				<key>placeholder</key>
+				<string>/opt/homebrew/bin/aws</string>
+				<key>required</key>
+				<false/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>Path of the AWS CLI used with AWS Profile. If empty, /opt/homebrew/bin/aws or /usr/local/bin/aws, then aws from the PATH.</string>
+			<key>label</key>
+			<string>AWS CLI Path</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>aws_cli_path</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string></string>
+				<key>placeholder</key>
 				<string>https://my-org.awsapps.com/start</string>
 				<key>required</key>
 				<false/>
@@ -1150,6 +1171,7 @@ Examples:
 	<array>
 		<string>token</string>
 		<string>aws_profile</string>
+		<string>aws_cli_path</string>
 		<string>sso_start_url</string>
 		<string>sso_region</string>
 		<string>sso_role_name</string>
