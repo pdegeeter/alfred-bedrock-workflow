@@ -52,10 +52,13 @@ test/
 - `browser` (optional) - Application opening the SSO login page (`open -a`), default browser when empty
 
 All authentication variables are listed in `variablesdontexport`. Never commit real SSO URLs, role names or account IDs: their values live in Alfred's `prefs.plist` (git-ignored).
-- `model` (optional) - Dropdown selection of available models, default: `eu.anthropic.claude-haiku-4-5-20251001-v1:0`
+- `model` (optional) - Dropdown selection of available models, default: `eu.anthropic.claude-haiku-5-5`
+- `level` (optional) - Effort level of Claude 5 models (`low`, `medium`, `high`, `xhigh`, `max`), default: `low` (closest to Claude Haiku 4.5, which ran without thinking)
 - `default_lang` (optional) - Default target language for translations
 
 Region is auto-detected from model prefix (`eu.` → `eu-west-1`, `us.`/`global.` → `us-east-1`).
+
+`ModelFeatures` switches the Converse request by model generation: Claude 5 models get `additionalModelRequestFields.output_config.effort`, no `temperature` (rejected with a 400); older models get `temperature` and no effort. `maxTokens` is the model's output limit (Claude 5: 128000, Claude 4: 64000, Opus 4/4.1: 32000, unknown: 4096): it only caps the output, and thinking counts toward it. Responses may start with reasoning blocks, so the client joins the text blocks instead of reading the first one.
 
 ## Bedrock Token Resolution
 

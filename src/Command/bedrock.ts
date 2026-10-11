@@ -2,11 +2,15 @@ import {
   createErrorResponse,
   createScriptFilterResponse,
 } from "../Helper/AlfredOutput.js";
+import { ModelFeatures } from "../Helper/ModelFeatures.js";
 import { detectRegion } from "../Helper/RegionDetector.js";
 import { BedrockTokenProvider } from "../Service/BedrockTokenProvider.js";
 import { ChatService } from "../Service/ChatService.js";
 
-const DEFAULT_MODEL = "eu.anthropic.claude-haiku-4-5-20251001-v1:0";
+const DEFAULT_MODEL = "eu.anthropic.claude-haiku-5-5";
+
+// Closest to Claude Haiku 4.5, which ran without thinking.
+const DEFAULT_LEVEL = "low";
 
 async function main(): Promise<void> {
   const query = process.argv[2];
@@ -18,9 +22,10 @@ async function main(): Promise<void> {
     return;
   }
 
+  const effort = ModelFeatures.parseLevel(process.env["level"] || DEFAULT_LEVEL);
   const token = await BedrockTokenProvider.fromEnvironment(process.env).getToken(detectRegion(model));
 
-  const service = new ChatService({ model, token });
+  const service = new ChatService({ effort, model, token });
   const response = await service.ask(query);
   const output = createScriptFilterResponse(response);
 

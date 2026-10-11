@@ -1,50 +1,27 @@
+import { ModelFeatures } from "../Helper/ModelFeatures.js";
 import { detectRegion } from "../Helper/RegionDetector.js";
-
-/**
- * Configuration for BedrockClient.
- */
-export interface BedrockConfig {
-  modelId: string;
-  systemPrompt?: string;
-  token: string;
-}
-
-/**
- * Bedrock Converse API request body.
- */
-interface ConverseRequest {
-  inferenceConfig: {
-    maxTokens: number;
-    temperature: number;
-  };
-  messages: Array<{
-    content: Array<{ text: string }>;
-    role: "user" | "assistant";
-  }>;
-  system?: Array<{ text: string }>;
-}
-
-/**
- * Bedrock Converse API response.
- */
-interface ConverseResponse {
-  output?: {
-    message?: {
-      content?: Array<{ text?: string }>;
-    };
-  };
-}
+import type { BedrockConfig } from "../Type/BedrockConfig.js";
+import type { ConverseRequest } from "../Type/ConverseRequest.js";
+import type { ConverseResponse } from "../Type/ConverseResponse.js";
+import type { EffortLevel } from "../Type/EffortLevel.js";
 
 /**
  * Client for Amazon Bedrock Runtime API using fetch.
  */
 export class BedrockClient {
+  /** Stop reasons for which the model or a guardrail declined to answer. */
+  private static readonly DECLINED: readonly string[] = ["content_filtered", "guardrail_intervened", "refusal"];
+
+  private readonly effort?: EffortLevel;
+  private readonly features: ModelFeatures;
   private readonly modelId: string;
   private readonly region: string;
   private readonly systemPrompt?: string;
   private readonly token: string;
 
   constructor(config: BedrockConfig) {
+    this.effort = config.effort;
+    this.features = new ModelFeatures(config.modelId);
     this.modelId = config.modelId;
     this.region = detectRegion(config.modelId);
     this.systemPrompt = config.systemPrompt;
@@ -60,9 +37,12 @@ export class BedrockClient {
     const url = `https://bedrock-runtime.${this.region}.amazonaws.com/model/${this.modelId}/converse`;
 
     const body: ConverseRequest = {
+      ...(this.features.usesEffort && this.effort && {
+        additionalModelRequestFields: { output_config: { effort: this.effort } },
+      }),
       inferenceConfig: {
-        maxTokens: 4096,
-        temperature: 0.7,
+        maxTokens: this.features.maxOutputTokens,
+        ...(!this.features.usesEffort && { temperature: 0.7 }),
       },
       messages: [
         {
@@ -90,12 +70,15 @@ export class BedrockClient {
     }
 
     const data = (await response.json()) as ConverseResponse;
-    const content = data.output?.message?.content;
+    const text = (data.output?.message?.content ?? []).map((block) => block.text ?? "").join("");
 
-    if (!content || content.length === 0) {
-      return "";
+    if (data.stopReason && BedrockClient.DECLINED.includes(data.stopReason)) {
+      throw new Error(`Bedrock declined the request (${data.stopReason})`);
+    }
+    if (data.stopReason === "max_tokens") {
+      return `${text}\n\n_[Response truncated: output limit reached]_`;
     }
 
-    return content[0].text ?? "";
+    return text;
   }
 }

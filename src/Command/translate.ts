@@ -2,26 +2,16 @@ import {
   createErrorResponse,
   createScriptFilterResponse,
 } from "../Helper/AlfredOutput.js";
+import { ModelFeatures } from "../Helper/ModelFeatures.js";
 import { detectRegion } from "../Helper/RegionDetector.js";
+import { TranslationQuery } from "../Helper/TranslationQuery.js";
 import { BedrockTokenProvider } from "../Service/BedrockTokenProvider.js";
 import { ChatService } from "../Service/ChatService.js";
 
-const DEFAULT_MODEL = "eu.anthropic.claude-haiku-4-5-20251001-v1:0";
+const DEFAULT_MODEL = "eu.anthropic.claude-haiku-5-5";
 
-const LANGUAGE_NAMES: Record<string, string> = {
-  de: "German",
-  en: "English",
-  es: "Spanish",
-  fr: "French",
-  it: "Italian",
-  ja: "Japanese",
-  ko: "Korean",
-  nl: "Dutch",
-  pl: "Polish",
-  pt: "Portuguese",
-  ru: "Russian",
-  zh: "Chinese",
-};
+// Closest to Claude Haiku 4.5, which ran without thinking.
+const DEFAULT_LEVEL = "low";
 
 const SYSTEM_PROMPT = `You are a silent translator.
 The user message contains ONLY text to translate to a target language.
@@ -30,19 +20,6 @@ ABSOLUTE rules:
 - NEVER add explanations, comments, preambles or questions
 - Preserve punctuation and formatting
 - If the text is already in the target language, return it as-is`;
-
-interface ParsedQuery {
-  lang: string;
-  text: string;
-}
-
-function parseQuery(query: string, defaultLang: string): ParsedQuery {
-  const match = /^:?([a-zA-Z]{2})\s+(.+)$/s.exec(query);
-  if (match) {
-    return { lang: match[1].toLowerCase(), text: match[2] };
-  }
-  return { lang: defaultLang, text: query };
-}
 
 async function main(): Promise<void> {
   const query = process.argv[2];
@@ -55,13 +32,13 @@ async function main(): Promise<void> {
     return;
   }
 
+  const effort = ModelFeatures.parseLevel(process.env["level"] || DEFAULT_LEVEL);
   const token = await BedrockTokenProvider.fromEnvironment(process.env).getToken(detectRegion(model));
 
-  const { lang, text } = parseQuery(query, defaultLang);
-  const langName = LANGUAGE_NAMES[lang] ?? lang;
+  const { languageName, text } = new TranslationQuery(query, defaultLang);
 
-  const service = new ChatService({ model, systemPrompt: SYSTEM_PROMPT, token });
-  const response = await service.ask(`Translate to ${langName}:\n${text}`);
+  const service = new ChatService({ effort, model, systemPrompt: SYSTEM_PROMPT, token });
+  const response = await service.ask(`Translate to ${languageName}:\n${text}`);
   const output = createScriptFilterResponse(response);
 
   process.stdout.write(JSON.stringify(output));
