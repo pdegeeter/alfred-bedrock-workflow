@@ -53,6 +53,8 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/): the
 | `feat!:` or a `BREAKING CHANGE:` footer | major version |
 | `chore:`, `docs:`, `refactor:`, `test:`, `ci:` | no release on their own, not listed |
 
+Dependabot (`.github/dependabot.yml`) opens weekly pull requests following this format: `ci:` for GitHub Actions, grouped, and `chore(deps):` for Cargo, minor and patch updates grouped, majors one by one.
+
 When a pull request is squash-merged, its title becomes the commit message: it must follow the same format.
 
 ## Releasing
